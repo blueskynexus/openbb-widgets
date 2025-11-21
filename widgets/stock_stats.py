@@ -30,15 +30,30 @@ logger = logging.getLogger(__name__)
                 "label": "Stock Symbol",
                 "type": "text",
                 "description": "Enter a stock ticker symbol (e.g., AAPL, MSFT, GOOGL)",
-            }
+            },
+            {
+                "paramName": "metrics_display",
+                "value": "all",
+                "label": "Metrics to Display",
+                "type": "text",
+                "description": "Choose which metrics to display",
+                "options": [
+                    {"label": "All Metrics", "value": "all"},
+                    {"label": "Price & Performance", "value": "price_performance"},
+                    {"label": "Fundamentals Only", "value": "fundamentals"},
+                    {"label": "Technical Only", "value": "technical"},
+                ],
+            },
         ],
     }
 )
-def get_stock_stats(symbol: str = "AAPL"):
+def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
     """Returns stock statistics as metrics for a given symbol.
 
     Args:
         symbol (str): Stock ticker symbol. Defaults to "AAPL".
+        metrics_display (str): Which metrics to display. Options: "all", "price_performance",
+                              "fundamentals", "technical". Defaults to "all".
 
     Returns:
         JSONResponse: Array of metric objects with stock statistics.
@@ -69,6 +84,12 @@ def get_stock_stats(symbol: str = "AAPL"):
 
         # Build metrics array
         metrics = []
+
+        # Determine which sections to include based on metrics_display parameter
+        show_price = True  # Always show price section
+        show_performance = metrics_display in ["all", "price_performance"]
+        show_fundamentals = metrics_display in ["all", "fundamentals"]
+        show_technical = metrics_display in ["all", "technical"]
 
         # ============================================================
         # SECTION 1: PRICE & MARKET DATA
@@ -168,93 +189,96 @@ def get_stock_stats(symbol: str = "AAPL"):
         # SECTION 2: PERFORMANCE METRICS
         # ============================================================
 
-        # 52-Week High
-        if "52weekHigh" in data:
-            metrics.append(
-                {
-                    "label": "52-Week High",
-                    "value": f"${data['52weekHigh']:.2f}",
-                    "description": f"Date: {data.get('52weekHighDate', 'N/A')}",
-                }
-            )
+        if show_performance:
+            # 52-Week High
+            if "52weekHigh" in data:
+                metrics.append(
+                    {
+                        "label": "52-Week High",
+                        "value": f"${data['52weekHigh']:.2f}",
+                        "description": f"Date: {data.get('52weekHighDate', 'N/A')}",
+                    }
+                )
 
-        # 52-Week Low
-        if "52weekLow" in data:
-            metrics.append(
-                {
-                    "label": "52-Week Low",
-                    "value": f"${data['52weekLow']:.2f}",
-                    "description": f"Date: {data.get('52weekLowDate', 'N/A')}",
-                }
-            )
+            # 52-Week Low
+            if "52weekLow" in data:
+                metrics.append(
+                    {
+                        "label": "52-Week Low",
+                        "value": f"${data['52weekLow']:.2f}",
+                        "description": f"Date: {data.get('52weekLowDate', 'N/A')}",
+                    }
+                )
 
-        # 52-Week Change
-        if "52weekChange" in data:
-            change_pct = data["52weekChange"] * 100
-            metrics.append(
-                {
-                    "label": "52-Week Change",
-                    "value": f"{change_pct:+.2f}%",
-                    "delta": f"{data['52weekChange']:.4f}",
-                }
-            )
+            # 52-Week Change
+            if "52weekChange" in data:
+                change_pct = data["52weekChange"] * 100
+                metrics.append(
+                    {
+                        "label": "52-Week Change",
+                        "value": f"{change_pct:+.2f}%",
+                        "delta": f"{data['52weekChange']:.4f}",
+                    }
+                )
 
-        # YTD Change
-        if "ytdChange" in data:
-            ytd_pct = data["ytdChange"] * 100
-            metrics.append(
-                {
-                    "label": "YTD Change",
-                    "value": f"{ytd_pct:+.2f}%",
-                    "delta": f"{data['ytdChange']:.4f}",
-                }
-            )
+            # YTD Change
+            if "ytdChange" in data:
+                ytd_pct = data["ytdChange"] * 100
+                metrics.append(
+                    {
+                        "label": "YTD Change",
+                        "value": f"{ytd_pct:+.2f}%",
+                        "delta": f"{data['ytdChange']:.4f}",
+                    }
+                )
 
         # ============================================================
         # SECTION 3: FUNDAMENTAL METRICS
         # ============================================================
 
-        # PE Ratio
-        if "peRatioTtm" in data:
-            metrics.append({"label": "P/E Ratio (TTM)", "value": f"{data['peRatioTtm']:.2f}"})
+        if show_fundamentals:
+            # PE Ratio
+            if "peRatioTtm" in data:
+                metrics.append({"label": "P/E Ratio (TTM)", "value": f"{data['peRatioTtm']:.2f}"})
 
-        # EPS
-        if "epsTtm" in data:
-            metrics.append({"label": "EPS (TTM)", "value": f"${data['epsTtm']:.2f}"})
+            # EPS
+            if "epsTtm" in data:
+                metrics.append({"label": "EPS (TTM)", "value": f"${data['epsTtm']:.2f}"})
 
-        # Beta
-        if "beta" in data:
-            metrics.append(
-                {
-                    "label": "Beta",
-                    "value": f"{data['beta']:.2f}",
-                    "description": "Volatility measure vs. market",
-                }
-            )
+            # Beta
+            if "beta" in data:
+                metrics.append(
+                    {
+                        "label": "Beta",
+                        "value": f"{data['beta']:.2f}",
+                        "description": "Volatility measure vs. market",
+                    }
+                )
 
         # ============================================================
         # SECTION 4: TECHNICAL INDICATORS
         # ============================================================
 
-        # 50-Day Moving Average
-        if "day50MovingAverage" in data:
-            metrics.append({"label": "50-Day MA", "value": f"${data['day50MovingAverage']:.2f}"})
+        if show_technical:
+            # 50-Day Moving Average
+            if "day50MovingAverage" in data:
+                metrics.append({"label": "50-Day MA", "value": f"${data['day50MovingAverage']:.2f}"})
 
-        # 200-Day Moving Average
-        if "day200MovingAverage" in data:
-            metrics.append({"label": "200-Day MA", "value": f"${data['day200MovingAverage']:.2f}"})
+            # 200-Day Moving Average
+            if "day200MovingAverage" in data:
+                metrics.append({"label": "200-Day MA", "value": f"${data['day200MovingAverage']:.2f}"})
 
-        # Shares Outstanding
-        if "sharesOutstanding" in data:
-            shares = data["sharesOutstanding"]
-            if shares >= 1_000_000_000:
-                shares_str = f"{shares / 1_000_000_000:.2f}B"
-            elif shares >= 1_000_000:
-                shares_str = f"{shares / 1_000_000:.2f}M"
-            else:
-                shares_str = f"{shares:,}"
+            # Shares Outstanding
+            if "sharesOutstanding" in data:
+                shares = data["sharesOutstanding"]
+                if shares >= 1_000_000_000:
+                    shares_str = f"{shares / 1_000_000_000:.2f}B"
+                elif shares >= 1_000_000:
+                    shares_str = f"{shares / 1_000_000:.2f}M"
+                else:
+                    shares_str = f"{shares:,}"
 
-            metrics.append({"label": "Shares Outstanding", "value": shares_str})
+                metrics.append({"label": "Shares Outstanding", "value": shares_str})
 
         return JSONResponse(content=metrics)
 
