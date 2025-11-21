@@ -8,6 +8,7 @@ It shows fundamental and technical indicators including PE ratio, EPS, moving av
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 import logging
+from datetime import datetime
 
 from registry import register_widget
 from vianexus.dataset import stock_stats, vnx_quote
@@ -97,7 +98,25 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
 
         # Company name and symbol
         if "issuerName" in data:
-            metrics.append({"label": "Company", "value": data["issuerName"]})
+            company_display = data["issuerName"]
+            # Add ticker symbol to company name
+            if "symbol" in data:
+                company_display = f"{company_display} ({data['symbol']})"
+            metrics.append({"label": "Company", "value": company_display})
+
+        # Exchange information
+        if "mic" in data:
+            # Map common MIC codes to exchange names
+            mic_to_exchange = {
+                "XNYS": "NYSE",
+                "XNAS": "NASDAQ",
+                "XASE": "NYSE American",
+                "ARCX": "NYSE Arca",
+                "BATS": "CBOE BZX",
+                "IEXG": "IEX",
+            }
+            exchange_name = mic_to_exchange.get(data["mic"], data["mic"])
+            metrics.append({"label": "Exchange", "value": f"{data['mic']} • {exchange_name}"})
 
         # Current Price (from VNX_QUOTE if available)
         if quote_data and "vnxPrice" in quote_data:
@@ -279,6 +298,38 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
                     shares_str = f"{shares:,}"
 
                 metrics.append({"label": "Shares Outstanding", "value": shares_str})
+
+        # ============================================================
+        # DATA FRESHNESS
+        # ============================================================
+
+        # Last updated timestamp
+        if "updated" in data:
+            # Convert millisecond timestamp to datetime
+            updated_ms = data["updated"]
+            updated_dt = datetime.fromtimestamp(updated_ms / 1000)
+
+            # Calculate time ago
+            now = datetime.now()
+            time_diff = now - updated_dt
+
+            if time_diff.total_seconds() < 60:
+                time_ago = "Just now"
+            elif time_diff.total_seconds() < 3600:
+                minutes = int(time_diff.total_seconds() / 60)
+                time_ago = f"{minutes} min ago"
+            elif time_diff.total_seconds() < 86400:
+                hours = int(time_diff.total_seconds() / 3600)
+                time_ago = f"{hours} hr ago" if hours == 1 else f"{hours} hrs ago"
+            else:
+                days = int(time_diff.total_seconds() / 86400)
+                time_ago = f"{days} day ago" if days == 1 else f"{days} days ago"
+
+            metrics.append({
+                "label": "Last Updated",
+                "value": time_ago,
+                "description": updated_dt.strftime("%Y-%m-%d %H:%M:%S")
+            })
 
         return JSONResponse(content=metrics)
 
