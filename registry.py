@@ -47,6 +47,7 @@ def register_widget(widget_config):
         def my_endpoint():
             return [{"label": "Test", "value": "123"}]
     """
+
     def decorator(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -73,4 +74,5 @@ def register_widget(widget_config):
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
+
     return decorator

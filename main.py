@@ -12,21 +12,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 import utils.logging as logging_utils
-from registry import WIDGETS, register_widget
+from registry import WIDGETS
 
 # Initialize FastAPI application with metadata
 app = FastAPI(
     title="Vianexus Stock Stats",
     description="Stock statistics widgets powered by Vianexus API",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 # Define allowed origins for CORS (Cross-Origin Resource Sharing)
-origins = [
-    "https://pro.openbb.co",
-    "https://pro.openbb.dev",
-    "http://localhost:1420"
-]
+origins = ["https://pro.openbb.co", "https://pro.openbb.dev", "http://localhost:1420"]
 
 # Configure CORS middleware to handle cross-origin requests
 app.add_middleware(
@@ -68,8 +64,8 @@ def get_apps():
 
 # Import all widgets to register them with the application
 # This must come after the app is defined so widgets can register their routes
-from widgets.stock_stats import get_stock_stats
-from widgets.hello_world import hello_world
+from widgets.stock_stats import get_stock_stats  # noqa: E402
+from widgets.hello_world import hello_world  # noqa: E402
 
 # Register widget routes with the FastAPI app
 app.get("/stock_stats")(get_stock_stats)

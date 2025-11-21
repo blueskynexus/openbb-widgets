@@ -29,7 +29,7 @@ class Dataset:
 
 
 stock_stats = Dataset("CORE", "STOCK_STATS_US")
-'''
+"""
 [
   {
     "52weekChange": -0.19,
@@ -55,6 +55,6 @@ stock_stats = Dataset("CORE", "STOCK_STATS_US")
     "updated": 1763730632006.439
   }
 ]
-'''
+"""
 
 vnx_quote = Dataset("EDGE", "VNX_QUOTE")
