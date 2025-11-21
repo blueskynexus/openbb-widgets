@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 import logging
 
 from registry import register_widget
-from vianexus.dataset import stock_stats
+from vianexus.dataset import stock_stats, vnx_quote
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +57,122 @@ def get_stock_stats(symbol: str = "AAPL"):
         # Extract the first (and only) result
         data = response[0]
 
+        # Try to fetch real-time quote data
+        quote_data = None
+        try:
+            quote_response = vnx_quote.data([symbol.upper()])
+            if quote_response and len(quote_response) > 0:
+                quote_data = quote_response[0]
+        except Exception as e:
+            logger.warning(f"Could not fetch quote data for {symbol}: {str(e)}")
+            # Continue without quote data
+
         # Build metrics array
         metrics = []
+
+        # ============================================================
+        # SECTION 1: PRICE & MARKET DATA
+        # ============================================================
 
         # Company name and symbol
         if "issuerName" in data:
             metrics.append({"label": "Company", "value": data["issuerName"]})
+
+        # Current Price (from VNX_QUOTE if available)
+        if quote_data and "vnxPrice" in quote_data:
+            current_price = quote_data["vnxPrice"]
+            metrics.append({
+                "label": "Current Price",
+                "value": f"${current_price:.2f}",
+                "description": "Real-time price"
+            })
+
+            # Market Cap (price * shares outstanding)
+            if "sharesOutstanding" in data:
+                market_cap = current_price * data["sharesOutstanding"]
+                if market_cap >= 1_000_000_000_000:  # Trillion
+                    market_cap_str = f"${market_cap / 1_000_000_000_000:.2f}T"
+                elif market_cap >= 1_000_000_000:  # Billion
+                    market_cap_str = f"${market_cap / 1_000_000_000:.2f}B"
+                elif market_cap >= 1_000_000:  # Million
+                    market_cap_str = f"${market_cap / 1_000_000:.2f}M"
+                else:
+                    market_cap_str = f"${market_cap:,.0f}"
+
+                metrics.append({
+                    "label": "Market Cap",
+                    "value": market_cap_str
+                })
+
+        # Day's Range (from VNX_QUOTE if available)
+        if quote_data and "vnxLowPrice" in quote_data and "vnxHighPrice" in quote_data:
+            day_low = quote_data["vnxLowPrice"]
+            day_high = quote_data["vnxHighPrice"]
+            if day_low > 0 and day_high > 0:  # Valid range
+                metrics.append({
+                    "label": "Day's Range",
+                    "value": f"${day_low:.2f} - ${day_high:.2f}"
+                })
+
+        # Bid/Ask (from VNX_QUOTE if available)
+        if quote_data and "vnxBidPrice" in quote_data and "vnxAskPrice" in quote_data:
+            bid = quote_data["vnxBidPrice"]
+            ask = quote_data["vnxAskPrice"]
+            if bid > 0 and ask > 0:  # Valid bid/ask
+                metrics.append({
+                    "label": "Bid / Ask",
+                    "value": f"${bid:.2f} / ${ask:.2f}"
+                })
+
+        # Today's Volume vs Average (from VNX_QUOTE if available)
+        if quote_data and "vnxVolume" in quote_data and "avg30DayVolume" in data:
+            today_volume = quote_data["vnxVolume"]
+            avg_volume = data["avg30DayVolume"]
+
+            # Format today's volume
+            if today_volume >= 1_000_000:
+                today_str = f"{today_volume / 1_000_000:.2f}M"
+            elif today_volume >= 1_000:
+                today_str = f"{today_volume / 1_000:.2f}K"
+            else:
+                today_str = f"{today_volume:,}"
+
+            # Format average volume
+            if avg_volume >= 1_000_000:
+                avg_str = f"{avg_volume / 1_000_000:.2f}M"
+            elif avg_volume >= 1_000:
+                avg_str = f"{avg_volume / 1_000:.2f}K"
+            else:
+                avg_str = f"{avg_volume:,}"
+
+            # Calculate comparison
+            if avg_volume > 0:
+                volume_ratio = (today_volume / avg_volume - 1)
+                metrics.append({
+                    "label": "Volume (Today vs Avg)",
+                    "value": f"{today_str} / {avg_str}",
+                    "delta": f"{volume_ratio:.4f}",
+                    "description": "Today / 30-day average"
+                })
+            else:
+                metrics.append({
+                    "label": "Volume (Today)",
+                    "value": today_str
+                })
+        elif "avg30DayVolume" in data:
+            # Fallback to just showing average volume if no real-time data
+            volume = data["avg30DayVolume"]
+            if volume >= 1_000_000:
+                volume_str = f"{volume / 1_000_000:.2f}M"
+            elif volume >= 1_000:
+                volume_str = f"{volume / 1_000:.2f}K"
+            else:
+                volume_str = f"{volume:,}"
+            metrics.append({"label": "Avg 30-Day Volume", "value": volume_str})
+
+        # ============================================================
+        # SECTION 2: PERFORMANCE METRICS
+        # ============================================================
 
         # 52-Week High
         if "52weekHigh" in data:
@@ -106,6 +216,10 @@ def get_stock_stats(symbol: str = "AAPL"):
                 }
             )
 
+        # ============================================================
+        # SECTION 3: FUNDAMENTAL METRICS
+        # ============================================================
+
         # PE Ratio
         if "peRatioTtm" in data:
             metrics.append({"label": "P/E Ratio (TTM)", "value": f"{data['peRatioTtm']:.2f}"})
@@ -124,6 +238,10 @@ def get_stock_stats(symbol: str = "AAPL"):
                 }
             )
 
+        # ============================================================
+        # SECTION 4: TECHNICAL INDICATORS
+        # ============================================================
+
         # 50-Day Moving Average
         if "day50MovingAverage" in data:
             metrics.append({"label": "50-Day MA", "value": f"${data['day50MovingAverage']:.2f}"})
@@ -132,17 +250,6 @@ def get_stock_stats(symbol: str = "AAPL"):
         if "day200MovingAverage" in data:
             metrics.append({"label": "200-Day MA", "value": f"${data['day200MovingAverage']:.2f}"})
 
-        # Average 30-Day Volume
-        if "avg30DayVolume" in data:
-            volume = data["avg30DayVolume"]
-            if volume >= 1_000_000:
-                volume_str = f"{volume / 1_000_000:.2f}M"
-            elif volume >= 1_000:
-                volume_str = f"{volume / 1_000:.2f}K"
-            else:
-                volume_str = f"{volume:,}"
-
-            metrics.append({"label": "Avg 30-Day Volume", "value": volume_str})
 
         # Shares Outstanding
         if "sharesOutstanding" in data:

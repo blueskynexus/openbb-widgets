@@ -58,3 +58,28 @@ stock_stats = Dataset("CORE", "STOCK_STATS_US")
 """
 
 vnx_quote = Dataset("EDGE", "VNX_QUOTE")
+"""
+[
+  {
+    "vnxSymbol": "AAPL",
+    "vnxBidSize": 100,
+    "vnxBidPrice": 271.5,
+    "vnxAskSize": 100,
+    "vnxAskPrice": 271.49,
+    "vnxPrice": 271.4947,
+    "vnxLastSalePrice": 271.4822,
+    "vnxLastSaleSize": 362,
+    "vnxLowPrice": 266.2595,
+    "vnxHighPrice": 273.3009,
+    "vnxOpenPrice": 0,
+    "vnxClosePrice": 0,
+    "vnxVolume": 1007,
+    "vnxTimestamp": 1763758911098,
+    "vnxMarketPercent": 0,
+    "vnxHighTime": 1763752863134,
+    "vnxLowTime": 1763735403225,
+    "vnxPriceType": "U",
+    "MarketVolume": null
+  }
+]
+"""
