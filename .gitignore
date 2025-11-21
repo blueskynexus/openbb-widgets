@@ -17,3 +17,7 @@ pyrightconfig.json
 
 # claude-code
 CLAUDE.md
+.claude/
+
+# ruff
+.ruff_cache/
