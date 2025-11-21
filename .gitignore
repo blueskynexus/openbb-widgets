@@ -12,5 +12,8 @@ wheels/
 # Environment variables
 .env
 
+# pyright
+pyrightconfig.json
+
 # claude-code
 CLAUDE.md
