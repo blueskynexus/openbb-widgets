@@ -81,11 +81,13 @@ def get_stock_stats(symbol: str = "AAPL"):
         # Current Price (from VNX_QUOTE if available)
         if quote_data and "vnxPrice" in quote_data:
             current_price = quote_data["vnxPrice"]
-            metrics.append({
-                "label": "Current Price",
-                "value": f"${current_price:.2f}",
-                "description": "Real-time price"
-            })
+            metrics.append(
+                {
+                    "label": "Current Price",
+                    "value": f"${current_price:.2f}",
+                    "description": "Real-time price",
+                }
+            )
 
             # Market Cap (price * shares outstanding)
             if "sharesOutstanding" in data:
@@ -99,30 +101,23 @@ def get_stock_stats(symbol: str = "AAPL"):
                 else:
                     market_cap_str = f"${market_cap:,.0f}"
 
-                metrics.append({
-                    "label": "Market Cap",
-                    "value": market_cap_str
-                })
+                metrics.append({"label": "Market Cap", "value": market_cap_str})
 
         # Day's Range (from VNX_QUOTE if available)
         if quote_data and "vnxLowPrice" in quote_data and "vnxHighPrice" in quote_data:
             day_low = quote_data["vnxLowPrice"]
             day_high = quote_data["vnxHighPrice"]
             if day_low > 0 and day_high > 0:  # Valid range
-                metrics.append({
-                    "label": "Day's Range",
-                    "value": f"${day_low:.2f} - ${day_high:.2f}"
-                })
+                metrics.append(
+                    {"label": "Day's Range", "value": f"${day_low:.2f} - ${day_high:.2f}"}
+                )
 
         # Bid/Ask (from VNX_QUOTE if available)
         if quote_data and "vnxBidPrice" in quote_data and "vnxAskPrice" in quote_data:
             bid = quote_data["vnxBidPrice"]
             ask = quote_data["vnxAskPrice"]
             if bid > 0 and ask > 0:  # Valid bid/ask
-                metrics.append({
-                    "label": "Bid / Ask",
-                    "value": f"${bid:.2f} / ${ask:.2f}"
-                })
+                metrics.append({"label": "Bid / Ask", "value": f"${bid:.2f} / ${ask:.2f}"})
 
         # Today's Volume vs Average (from VNX_QUOTE if available)
         if quote_data and "vnxVolume" in quote_data and "avg30DayVolume" in data:
@@ -147,18 +142,17 @@ def get_stock_stats(symbol: str = "AAPL"):
 
             # Calculate comparison
             if avg_volume > 0:
-                volume_ratio = (today_volume / avg_volume - 1)
-                metrics.append({
-                    "label": "Volume (Today vs Avg)",
-                    "value": f"{today_str} / {avg_str}",
-                    "delta": f"{volume_ratio:.4f}",
-                    "description": "Today / 30-day average"
-                })
+                volume_ratio = today_volume / avg_volume - 1
+                metrics.append(
+                    {
+                        "label": "Volume (Today vs Avg)",
+                        "value": f"{today_str} / {avg_str}",
+                        "delta": f"{volume_ratio:.4f}",
+                        "description": "Today / 30-day average",
+                    }
+                )
             else:
-                metrics.append({
-                    "label": "Volume (Today)",
-                    "value": today_str
-                })
+                metrics.append({"label": "Volume (Today)", "value": today_str})
         elif "avg30DayVolume" in data:
             # Fallback to just showing average volume if no real-time data
             volume = data["avg30DayVolume"]
@@ -249,7 +243,6 @@ def get_stock_stats(symbol: str = "AAPL"):
         # 200-Day Moving Average
         if "day200MovingAverage" in data:
             metrics.append({"label": "200-Day MA", "value": f"${data['day200MovingAverage']:.2f}"})
-
 
         # Shares Outstanding
         if "sharesOutstanding" in data:
