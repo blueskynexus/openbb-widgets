@@ -1,5 +1,0 @@
-development:
-  vianexus_base_url: ${VIANEXUS_BASE_URL_DEV}
-
-production:
-  vianexus_base_url: https://api.blueskyapi.com/v1
