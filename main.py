@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import util.configure_logging as util
+import json
+from pathlib import Path
+from fastapi.responses import JSONResponse
 
 # Initialize FastAPI application with metadata
 app = FastAPI(
-    title="Hello World",
-    description="Hello World app for OpenBB Workspace",
-    version="0.0.1"
+    title="Hello World", description="Hello World app for OpenBB Workspace", version="0.0.1"
 )
 
 # Define allowed origins for CORS (Cross-Origin Resource Sharing)
@@ -25,15 +26,63 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
+
 @app.get("/")
 def read_root():
     """Root endpoint that returns basic information about the API"""
     return {"Info": "Hello World example"}
 
 
+# Widgets configuration file for the OpenBB Workspace
+# it contains the information and configuration about all the
+# widgets that will be displayed in the OpenBB Workspace
+@app.get("/widgets.json")
+def get_widgets():
+    """Widgets configuration file for the OpenBB Workspace
+
+    Returns:
+        JSONResponse: The contents of widgets.json file
+    """
+    # Read and return the widgets configuration file
+    return JSONResponse(
+        content=json.load((Path(__file__).parent.resolve() / "documents" / "widgets.json").open())
+    )
+
+
+# Apps configuration file for the OpenBB Workspace
+# it contains the information and configuration about all the
+# apps that will be displayed in the OpenBB Workspace
+@app.get("/apps.json")
+def get_apps():
+    """Apps configuration file for the OpenBB Workspace
+
+    Returns:
+        JSONResponse: The contents of apps.json file
+    """
+    # Read and return the apps configuration file
+    return JSONResponse(
+        content=json.load((Path(__file__).parent.resolve() / "documents" / "apps.json").open())
+    )
+
+
+# Hello World endpoint - for it to be recognized by the OpenBB Workspace
+# it needs to be added to the widgets.json file endpoint
+@app.get("/hello_world")
+def hello_world(name: str = ""):
+    """Returns a personalized greeting message.
+
+    Args:
+        name (str, optional): Name to include in the greeting. Defaults to empty string.
+
+    Returns:
+        str: A greeting message with the provided name in markdown format.
+    """
+    # Return a markdown-formatted greeting with the provided name
+    return f"# Hello World {name}"
+
+
 def main():
     util.configure_logging()
-
 
 
 if __name__ == "__main__":

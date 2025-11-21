@@ -15,7 +15,8 @@ class Settings(BaseSettings):
     # Vianexus API configuration
     vianexus_api_key: str = Field(
         default="RETRIVE_FROM_ENV",
-        validation_alias="VIANEXUS_API_KEY", description="API key for Vianexus API"
+        validation_alias="VIANEXUS_API_KEY",
+        description="API key for Vianexus API",
     )
     vianexus_base_url: str = Field(
         default="https://api.blueskyapi.com/v1",
