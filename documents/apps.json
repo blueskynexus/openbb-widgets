@@ -4,7 +4,7 @@
     "img": "",
     "img_dark": "",
     "img_light": "",
-    "description": "Hello World template",
+    "description": "Vianexus Stock Stats and Chart",
     "allowCustomization": true,
     "tabs": {
       "": {
@@ -12,7 +12,7 @@
         "name": "",
         "layout": [
           {
-            "i": "hello_world",
+            "i": "stock_stats",
             "x": 0,
             "y": 0,
             "w": 12,
