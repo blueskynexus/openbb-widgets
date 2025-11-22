@@ -8,3 +8,18 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Environment variables
+.env
+
+# pyright
+pyrightconfig.json
+
+# claude-code
+CLAUDE.md
+.claude/
+
+# ruff
+.ruff_cache/
+
+backends-for-openbb/
