@@ -50,7 +50,7 @@ def get_stock_chart(symbol: str = "AAPL"):
     """
     try:
         # Fetch 30 days of historical data
-        response = stock_stats.historical_data([symbol.upper()], last=30)
+        response = stock_stats.data([symbol.upper()], last=30)
 
         # Check if we got valid data
         if not response or len(response) == 0:
