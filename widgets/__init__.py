@@ -16,6 +16,6 @@ Example:
 
 # Import all widgets to ensure they are registered
 from .stock_stats import get_stock_stats
-from .hello_world import hello_world
+from .stock_chart import get_stock_chart
 
-__all__ = ["get_stock_stats", "hello_world"]
+__all__ = ["get_stock_stats", "get_stock_chart"]
