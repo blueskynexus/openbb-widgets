@@ -1,7 +1,64 @@
 import json
 import httpx
 import logging
+from pydantic import BaseModel, Field
 from config import settings
+
+
+class StockStatsData(BaseModel):
+    """Response schema for CORE/STOCK_STATS_US dataset"""
+
+    week_52_change: float = Field(alias="52weekChange")
+    week_52_high: float = Field(alias="52weekHigh")
+    week_52_high_date: str = Field(alias="52weekHighDate")
+    week_52_low: float = Field(alias="52weekLow")
+    week_52_low_date: str = Field(alias="52weekLowDate")
+    avg_30_day_volume: int = Field(alias="avg30DayVolume")
+    beta: float
+    date: str
+    day_200_moving_average: float = Field(alias="day200MovingAverage")
+    day_50_moving_average: float = Field(alias="day50MovingAverage")
+    eps_ttm: float = Field(alias="epsTtm")
+    issuer_name: str = Field(alias="issuerName")
+    mic: str
+    pe_ratio_ttm: float = Field(alias="peRatioTtm")
+    shares_outstanding: int = Field(alias="sharesOutstanding")
+    symbol: str
+    ytd_change: float = Field(alias="ytdChange")
+    id: str
+    key: str
+    subkey: str
+    updated: float
+
+    class Config:
+        populate_by_name = True
+
+
+class VnxQuoteData(BaseModel):
+    """Response schema for EDGE/VNX_QUOTE dataset"""
+
+    vnx_symbol: str = Field(alias="vnxSymbol")
+    vnx_bid_size: int = Field(alias="vnxBidSize")
+    vnx_bid_price: float = Field(alias="vnxBidPrice")
+    vnx_ask_size: int = Field(alias="vnxAskSize")
+    vnx_ask_price: float = Field(alias="vnxAskPrice")
+    vnx_price: float = Field(alias="vnxPrice")
+    vnx_last_sale_price: float = Field(alias="vnxLastSalePrice")
+    vnx_last_sale_size: int = Field(alias="vnxLastSaleSize")
+    vnx_low_price: float = Field(alias="vnxLowPrice")
+    vnx_high_price: float = Field(alias="vnxHighPrice")
+    vnx_open_price: float = Field(alias="vnxOpenPrice")
+    vnx_close_price: float = Field(alias="vnxClosePrice")
+    vnx_volume: int = Field(alias="vnxVolume")
+    vnx_timestamp: int = Field(alias="vnxTimestamp")
+    vnx_market_percent: float = Field(alias="vnxMarketPercent")
+    vnx_high_time: int = Field(alias="vnxHighTime")
+    vnx_low_time: int = Field(alias="vnxLowTime")
+    vnx_price_type: str = Field(alias="vnxPriceType")
+    market_volume: int | None = Field(alias="MarketVolume", default=None)
+
+    class Config:
+        populate_by_name = True
 
 
 class Dataset:
@@ -33,58 +90,41 @@ class Dataset:
         return data
 
 
-stock_stats = Dataset("CORE", "STOCK_STATS_US")
-"""
-[
-  {
-    "52weekChange": -0.19,
-    "52weekHigh": 312.56,
-    "52weekHighDate": "2025-01-30",
-    "52weekLow": 201.68,
-    "52weekLowDate": "2025-04-07",
-    "avg30DayVolume": 180729,
-    "beta": 0.87,
-    "date": "2025-11-21",
-    "day200MovingAverage": 240.85,
-    "day50MovingAverage": 237.55,
-    "epsTtm": 28.52,
-    "issuerName": "Asbury Automotive Group Inc",
-    "mic": "XNYS",
-    "peRatioTtm": 7.69,
-    "sharesOutstanding": 19440558,
-    "symbol": "ABG",
-    "ytdChange": -0.11,
-    "id": "STOCK_STATS_US",
-    "key": "ABG",
-    "subkey": "",
-    "updated": 1763730632006.439
-  }
-]
-"""
+class StockStats(Dataset):
+    def __init__(self):
+        super().__init__("CORE", "STOCK_STATS_US")
 
-vnx_quote = Dataset("EDGE", "VNX_QUOTE")
-"""
-[
-  {
-    "vnxSymbol": "AAPL",
-    "vnxBidSize": 100,
-    "vnxBidPrice": 271.5,
-    "vnxAskSize": 100,
-    "vnxAskPrice": 271.49,
-    "vnxPrice": 271.4947,
-    "vnxLastSalePrice": 271.4822,
-    "vnxLastSaleSize": 362,
-    "vnxLowPrice": 266.2595,
-    "vnxHighPrice": 273.3009,
-    "vnxOpenPrice": 0,
-    "vnxClosePrice": 0,
-    "vnxVolume": 1007,
-    "vnxTimestamp": 1763758911098,
-    "vnxMarketPercent": 0,
-    "vnxHighTime": 1763752863134,
-    "vnxLowTime": 1763735403225,
-    "vnxPriceType": "U",
-    "MarketVolume": null
-  }
-]
-"""
+    def data(self, symbols: list[str], last: int = 1) -> list[StockStatsData]:
+        """Get stock statistics data with validated schema
+
+        Args:
+            symbols: List of stock symbols
+            last: Number of historical records to fetch (default: 1)
+
+        Returns:
+            List of validated StockStatsData objects
+        """
+        raw_data = super().data(symbols, last=last)
+        return [StockStatsData(**item) for item in raw_data]
+
+
+class VnxQuote(Dataset):
+    def __init__(self):
+        super().__init__("EDGE", "VNX_QUOTE")
+
+    def data(self, symbols: list[str], last: int = 1) -> list[VnxQuoteData]:
+        """Get VNX quote data with validated schema
+
+        Args:
+            symbols: List of stock symbols
+            last: Number of historical records to fetch (default: 1)
+
+        Returns:
+            List of validated VnxQuoteData objects
+        """
+        raw_data = super().data(symbols, last=last)
+        return [VnxQuoteData(**item) for item in raw_data]
+
+
+stock_stats = StockStats()
+vnx_quote = VnxQuote()

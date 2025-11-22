@@ -96,15 +96,15 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
         # ============================================================
 
         # Company name and symbol
-        if "issuerName" in data:
-            company_display = data["issuerName"]
+        if data.issuer_name:
+            company_display = data.issuer_name
             # Add ticker symbol to company name
-            if "symbol" in data:
-                company_display = f"{company_display} ({data['symbol']})"
+            if data.symbol:
+                company_display = f"{company_display} ({data.symbol})"
             metrics.append({"label": "Company", "value": company_display})
 
         # Exchange information
-        if "mic" in data:
+        if data.mic:
             # Map common MIC codes to exchange names
             mic_to_exchange = {
                 "XNYS": "NYSE",
@@ -114,12 +114,12 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
                 "BATS": "CBOE BZX",
                 "IEXG": "IEX",
             }
-            exchange_name = mic_to_exchange.get(data["mic"], data["mic"])
-            metrics.append({"label": "Exchange", "value": f"{data['mic']} • {exchange_name}"})
+            exchange_name = mic_to_exchange.get(data.mic, data.mic)
+            metrics.append({"label": "Exchange", "value": f"{data.mic} • {exchange_name}"})
 
         # Current Price (from VNX_QUOTE if available)
-        if quote_data and "vnxPrice" in quote_data:
-            current_price = quote_data["vnxPrice"]
+        if quote_data and quote_data.vnx_price:
+            current_price = quote_data.vnx_price
             metrics.append(
                 {
                     "label": "Current Price",
@@ -129,8 +129,8 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
             )
 
             # Market Cap (price * shares outstanding)
-            if "sharesOutstanding" in data:
-                market_cap = current_price * data["sharesOutstanding"]
+            if data.shares_outstanding:
+                market_cap = current_price * data.shares_outstanding
                 if market_cap >= 1_000_000_000_000:  # Trillion
                     market_cap_str = f"${market_cap / 1_000_000_000_000:.2f}T"
                 elif market_cap >= 1_000_000_000:  # Billion
@@ -143,25 +143,25 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
                 metrics.append({"label": "Market Cap", "value": market_cap_str})
 
         # Day's Range (from VNX_QUOTE if available)
-        if quote_data and "vnxLowPrice" in quote_data and "vnxHighPrice" in quote_data:
-            day_low = quote_data["vnxLowPrice"]
-            day_high = quote_data["vnxHighPrice"]
+        if quote_data and quote_data.vnx_low_price and quote_data.vnx_high_price:
+            day_low = quote_data.vnx_low_price
+            day_high = quote_data.vnx_high_price
             if day_low > 0 and day_high > 0:  # Valid range
                 metrics.append(
                     {"label": "Day's Range", "value": f"${day_low:.2f} - ${day_high:.2f}"}
                 )
 
         # Bid/Ask (from VNX_QUOTE if available)
-        if quote_data and "vnxBidPrice" in quote_data and "vnxAskPrice" in quote_data:
-            bid = quote_data["vnxBidPrice"]
-            ask = quote_data["vnxAskPrice"]
+        if quote_data and quote_data.vnx_bid_price and quote_data.vnx_ask_price:
+            bid = quote_data.vnx_bid_price
+            ask = quote_data.vnx_ask_price
             if bid > 0 and ask > 0:  # Valid bid/ask
                 metrics.append({"label": "Bid / Ask", "value": f"${bid:.2f} / ${ask:.2f}"})
 
         # Today's Volume vs Average (from VNX_QUOTE if available)
-        if quote_data and "vnxVolume" in quote_data and "avg30DayVolume" in data:
-            today_volume = quote_data["vnxVolume"]
-            avg_volume = data["avg30DayVolume"]
+        if quote_data and quote_data.vnx_volume and data.avg_30_day_volume:
+            today_volume = quote_data.vnx_volume
+            avg_volume = data.avg_30_day_volume
 
             # Format today's volume
             if today_volume >= 1_000_000:
@@ -192,9 +192,9 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
                 )
             else:
                 metrics.append({"label": "Volume (Today)", "value": today_str})
-        elif "avg30DayVolume" in data:
+        elif data.avg_30_day_volume:
             # Fallback to just showing average volume if no real-time data
-            volume = data["avg30DayVolume"]
+            volume = data.avg_30_day_volume
             if volume >= 1_000_000:
                 volume_str = f"{volume / 1_000_000:.2f}M"
             elif volume >= 1_000:
@@ -209,44 +209,44 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
 
         if show_performance:
             # 52-Week High
-            if "52weekHigh" in data:
+            if data.week_52_high:
                 metrics.append(
                     {
                         "label": "52-Week High",
-                        "value": f"${data['52weekHigh']:.2f}",
-                        "description": f"Date: {data.get('52weekHighDate', 'N/A')}",
+                        "value": f"${data.week_52_high:.2f}",
+                        "description": f"Date: {data.week_52_high_date}",
                     }
                 )
 
             # 52-Week Low
-            if "52weekLow" in data:
+            if data.week_52_low:
                 metrics.append(
                     {
                         "label": "52-Week Low",
-                        "value": f"${data['52weekLow']:.2f}",
-                        "description": f"Date: {data.get('52weekLowDate', 'N/A')}",
+                        "value": f"${data.week_52_low:.2f}",
+                        "description": f"Date: {data.week_52_low_date}",
                     }
                 )
 
             # 52-Week Change
-            if "52weekChange" in data:
-                change_pct = data["52weekChange"] * 100
+            if data.week_52_change:
+                change_pct = data.week_52_change * 100
                 metrics.append(
                     {
                         "label": "52-Week Change",
                         "value": f"{change_pct:+.2f}%",
-                        "delta": f"{data['52weekChange']:.4f}",
+                        "delta": f"{data.week_52_change:.4f}",
                     }
                 )
 
             # YTD Change
-            if "ytdChange" in data:
-                ytd_pct = data["ytdChange"] * 100
+            if data.ytd_change:
+                ytd_pct = data.ytd_change * 100
                 metrics.append(
                     {
                         "label": "YTD Change",
                         "value": f"{ytd_pct:+.2f}%",
-                        "delta": f"{data['ytdChange']:.4f}",
+                        "delta": f"{data.ytd_change:.4f}",
                     }
                 )
 
@@ -256,19 +256,19 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
 
         if show_fundamentals:
             # PE Ratio
-            if "peRatioTtm" in data:
-                metrics.append({"label": "P/E Ratio (TTM)", "value": f"{data['peRatioTtm']:.2f}"})
+            if data.pe_ratio_ttm:
+                metrics.append({"label": "P/E Ratio (TTM)", "value": f"{data.pe_ratio_ttm:.2f}"})
 
             # EPS
-            if "epsTtm" in data:
-                metrics.append({"label": "EPS (TTM)", "value": f"${data['epsTtm']:.2f}"})
+            if data.eps_ttm:
+                metrics.append({"label": "EPS (TTM)", "value": f"${data.eps_ttm:.2f}"})
 
             # Beta
-            if "beta" in data:
+            if data.beta:
                 metrics.append(
                     {
                         "label": "Beta",
-                        "value": f"{data['beta']:.2f}",
+                        "value": f"{data.beta:.2f}",
                         "description": "Volatility measure vs. market",
                     }
                 )
@@ -279,20 +279,20 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
 
         if show_technical:
             # 50-Day Moving Average
-            if "day50MovingAverage" in data:
+            if data.day_50_moving_average:
                 metrics.append(
-                    {"label": "50-Day MA", "value": f"${data['day50MovingAverage']:.2f}"}
+                    {"label": "50-Day MA", "value": f"${data.day_50_moving_average:.2f}"}
                 )
 
             # 200-Day Moving Average
-            if "day200MovingAverage" in data:
+            if data.day_200_moving_average:
                 metrics.append(
-                    {"label": "200-Day MA", "value": f"${data['day200MovingAverage']:.2f}"}
+                    {"label": "200-Day MA", "value": f"${data.day_200_moving_average:.2f}"}
                 )
 
             # Shares Outstanding
-            if "sharesOutstanding" in data:
-                shares = data["sharesOutstanding"]
+            if data.shares_outstanding:
+                shares = data.shares_outstanding
                 if shares >= 1_000_000_000:
                     shares_str = f"{shares / 1_000_000_000:.2f}B"
                 elif shares >= 1_000_000:
@@ -307,9 +307,9 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
         # ============================================================
 
         # Last updated timestamp
-        if "updated" in data:
+        if data.updated:
             # Convert millisecond timestamp to datetime
-            updated_ms = data["updated"]
+            updated_ms = data.updated
             updated_dt = datetime.fromtimestamp(updated_ms / 1000)
 
             # Calculate time ago

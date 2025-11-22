@@ -61,10 +61,9 @@ def get_stock_chart(symbol: str = "AAPL"):
         ma_200 = []
 
         for record in response:
-            if "date" in record:
-                dates.append(record["date"])
-                ma_50.append(record.get("day50MovingAverage", None))
-                ma_200.append(record.get("day200MovingAverage", None))
+            dates.append(record.date)
+            ma_50.append(record.day_50_moving_average)
+            ma_200.append(record.day_200_moving_average)
 
         if len(dates) == 0:
             raise HTTPException(
