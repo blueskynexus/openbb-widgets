@@ -49,10 +49,7 @@ def get_stock_chart(symbol: str = "AAPL"):
         HTTPException: If the API call fails or symbol is invalid.
     """
     try:
-        # Fetch 30 days of historical data
         response = stock_stats.data([symbol.upper()], last=30)
-
-        # Check if we got valid data
         if not response or len(response) == 0:
             raise HTTPException(
                 status_code=404, detail=f"No historical data found for symbol: {symbol}"
@@ -66,22 +63,16 @@ def get_stock_chart(symbol: str = "AAPL"):
         for record in response:
             if "date" in record:
                 dates.append(record["date"])
-                # Extract 50-day MA (if available)
                 ma_50.append(record.get("day50MovingAverage", None))
-                # Extract 200-day MA (if available)
                 ma_200.append(record.get("day200MovingAverage", None))
 
-        # If we don't have enough data, raise an error
         if len(dates) == 0:
             raise HTTPException(
                 status_code=404,
                 detail=f"Insufficient historical data for symbol: {symbol}",
             )
 
-        # Create the Plotly figure
         fig = go.Figure()
-
-        # Add 50-Day Moving Average trace
         fig.add_trace(
             go.Scatter(
                 x=dates,
@@ -94,7 +85,6 @@ def get_stock_chart(symbol: str = "AAPL"):
             )
         )
 
-        # Add 200-Day Moving Average trace
         fig.add_trace(
             go.Scatter(
                 x=dates,
@@ -114,14 +104,11 @@ def get_stock_chart(symbol: str = "AAPL"):
 
         fig.update_layout(layout)
 
-        # Return the Plotly figure as JSON
         return json.loads(fig.to_json())  # type: ignore
 
     except HTTPException:
-        # Re-raise HTTP exceptions
         raise
     except Exception as e:
-        # Log the error and return a friendly message
         logger.error(f"Error fetching stock chart for {symbol}: {str(e)}")
 
         raise HTTPException(

@@ -339,12 +339,9 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
         return JSONResponse(content=metrics)
 
     except HTTPException:
-        # Re-raise HTTP exceptions
         raise
     except Exception as e:
-        # Log the error and return a friendly message
         logger.error(f"Error fetching stock stats for {symbol}: {str(e)}")
-
         raise HTTPException(
             status_code=500, detail=f"Error fetching data for symbol {symbol}: {str(e)}"
         )
