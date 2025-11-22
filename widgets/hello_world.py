@@ -14,5 +14,4 @@ def hello_world(name: str = ""):
     Returns:
         str: A greeting message with the provided name in markdown format.
     """
-    # Return a markdown-formatted greeting with the provided name
     return f"# Hello World {name}"
