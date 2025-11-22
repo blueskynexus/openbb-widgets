@@ -11,20 +11,31 @@ class Dataset:
         self.namespace = namespace
         self.dataset = dataset
 
-    def make_request(self, symbols: list[str]):
+    def make_request(self, symbols: list[str], last: int = 1):
         """Make a request to the Vianexus API to get the data for the dataset for the given symbols"""
         url = f"{self.base_url}/data/{self.namespace}/{self.dataset}/{','.join(symbols)}"
         params = {
             "token": self.api_key,
-            "last": 1,
+            "last": last,
         }
         response = httpx.get(url, params=params, timeout=10)
         return response.json()
 
     def data(self, symbols: list[str]):
         """Get the data for the dataset for the given symbols"""
-        data = self.make_request(symbols)
+        data = self.make_request(symbols, last=1)
         logging.debug(f"Data: \n{json.dumps(data, indent=4)}")
+        return data
+
+    def historical_data(self, symbols: list[str], last: int = 30):
+        """Get historical data for the dataset for the given symbols
+
+        Args:
+            symbols: List of stock symbols
+            last: Number of historical records to fetch (default: 30 for ~1 month)
+        """
+        data = self.make_request(symbols, last=last)
+        logging.debug(f"Historical Data: \n{json.dumps(data, indent=4)}")
         return data
 
 

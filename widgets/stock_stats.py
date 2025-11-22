@@ -87,7 +87,6 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
         metrics = []
 
         # Determine which sections to include based on metrics_display parameter
-        show_price = True  # Always show price section
         show_performance = metrics_display in ["all", "price_performance"]
         show_fundamentals = metrics_display in ["all", "fundamentals"]
         show_technical = metrics_display in ["all", "technical"]
@@ -281,11 +280,15 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
         if show_technical:
             # 50-Day Moving Average
             if "day50MovingAverage" in data:
-                metrics.append({"label": "50-Day MA", "value": f"${data['day50MovingAverage']:.2f}"})
+                metrics.append(
+                    {"label": "50-Day MA", "value": f"${data['day50MovingAverage']:.2f}"}
+                )
 
             # 200-Day Moving Average
             if "day200MovingAverage" in data:
-                metrics.append({"label": "200-Day MA", "value": f"${data['day200MovingAverage']:.2f}"})
+                metrics.append(
+                    {"label": "200-Day MA", "value": f"${data['day200MovingAverage']:.2f}"}
+                )
 
             # Shares Outstanding
             if "sharesOutstanding" in data:
@@ -325,11 +328,13 @@ def get_stock_stats(symbol: str = "AAPL", metrics_display: str = "all"):
                 days = int(time_diff.total_seconds() / 86400)
                 time_ago = f"{days} day ago" if days == 1 else f"{days} days ago"
 
-            metrics.append({
-                "label": "Last Updated",
-                "value": time_ago,
-                "description": updated_dt.strftime("%Y-%m-%d %H:%M:%S")
-            })
+            metrics.append(
+                {
+                    "label": "Last Updated",
+                    "value": time_ago,
+                    "description": updated_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+            )
 
         return JSONResponse(content=metrics)
 

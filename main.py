@@ -66,10 +66,12 @@ def get_apps():
 # This must come after the app is defined so widgets can register their routes
 from widgets.stock_stats import get_stock_stats  # noqa: E402
 from widgets.hello_world import hello_world  # noqa: E402
+from widgets.stock_chart import get_stock_chart  # noqa: E402
 
 # Register widget routes with the FastAPI app
 app.get("/stock_stats")(get_stock_stats)
 app.get("/hello_world")(hello_world)
+app.get("/stock_chart")(get_stock_chart)
 
 
 def main():
